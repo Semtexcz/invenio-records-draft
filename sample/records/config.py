@@ -54,7 +54,8 @@ RECORDS_REST_ENDPOINTS = draft_enabled_endpoint(
     unpublish_permission_factory=allow_authenticated,
     edit_permission_factory=allow_authenticated,
     draft_record_class=DraftRecord,
-    published_record_class=PublishedRecord
+    published_record_class=PublishedRecord,
+    published_jsonschema='records/record-v1.0.0.json'
 )
 
 """REST API for my-site."""

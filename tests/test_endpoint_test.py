@@ -5,6 +5,7 @@ import uuid
 import pytest
 import requests
 from invenio_indexer.api import RecordIndexer
+from invenio_indexer.signals import before_record_index
 from invenio_jsonschemas import current_jsonschemas
 from invenio_pidstore.minters import recid_minter
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -184,6 +185,10 @@ def test_draft_endpoint_list(app, db, schemas, mappings, prepare_es,
 
 def test_draft_endpoint_ops(app, db, schemas, mappings, prepare_es,
                             client, draft_records_url):
+    print('checking', id(before_record_index))
+
+    assert before_record_index.receivers
+
     resp = client.post(
         draft_records_url,
         json={

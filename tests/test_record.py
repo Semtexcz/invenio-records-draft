@@ -45,7 +45,7 @@ def test_publish_record(app, db, schemas):
             # title is required but not in rec, so should fail
             rec.publish(draft_pid,
                         TestPublishedRecord, 'recid',
-                        lambda record: True,
+                        lambda record, pid: True,
                         remove_draft=True)
 
         with pytest.raises(PIDDoesNotExistError):
@@ -59,7 +59,7 @@ def test_publish_record(app, db, schemas):
         # and publish it again
         rec.publish(draft_pid,
                     TestPublishedRecord, 'recid',
-                    lambda record: True,
+                    lambda record, pid: True,
                     remove_draft=True)
 
         # draft should be gone
@@ -128,7 +128,7 @@ def test_publish_record_with_previous_version(app, db, schemas):
         published_uuid = uuid.uuid4()
         published_record = TestPublishedRecord.create({
             'id': '1',
-            'title': '1'
+            'title': '11'
         }, id_=published_uuid)
         PersistentIdentifier.create(
             pid_type='recid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -139,7 +139,7 @@ def test_publish_record_with_previous_version(app, db, schemas):
         draft_uuid = uuid.uuid4()
         draft_record = TestDraftRecord.create({
             'id': '1',
-            'title': '2'
+            'title': '22'
         }, id_=draft_uuid)
         draft_pid = PersistentIdentifier.create(
             pid_type='drecid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -150,7 +150,7 @@ def test_publish_record_with_previous_version(app, db, schemas):
         # and publish it again
         draft_record.publish(draft_pid,
                              TestPublishedRecord, 'recid',
-                             lambda record: True,
+                             lambda record, pid: True,
                              remove_draft=True)
 
         # draft should be gone
@@ -163,7 +163,7 @@ def test_publish_record_with_previous_version(app, db, schemas):
         assert published_pid.status == PIDStatus.REGISTERED
         rec = TestPublishedRecord.get_record(published_pid.object_uuid)
         assert rec.model.json is not None
-        assert rec['title'] == '2'
+        assert rec['title'] == '22'
         assert rec.revision_id == 1
 
 
@@ -174,7 +174,7 @@ def test_publish_deleted_published(app, db, schemas):
         published_uuid = uuid.uuid4()
         published_record = TestPublishedRecord.create({
             'id': '1',
-            'title': '1'
+            'title': '11'
         }, id_=published_uuid)
         published_pid = PersistentIdentifier.create(
             pid_type='recid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -185,7 +185,7 @@ def test_publish_deleted_published(app, db, schemas):
         draft_uuid = uuid.uuid4()
         rec = TestDraftRecord.create({
             'id': '1',
-            'title': '2'
+            'title': '22'
         }, id_=draft_uuid)
         draft_pid = PersistentIdentifier.create(
             pid_type='drecid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -202,7 +202,7 @@ def test_publish_deleted_published(app, db, schemas):
         draft_pid = PersistentIdentifier.get(pid_type='drecid', pid_value='1')
         rec.publish(draft_pid,
                     TestPublishedRecord, 'recid',
-                    lambda record: True,
+                    lambda record, pid: True,
                     remove_draft=True)
 
     with db.session.begin_nested():
@@ -215,7 +215,7 @@ def test_publish_deleted_published(app, db, schemas):
         published_pid = PersistentIdentifier.get(pid_type='recid', pid_value='1')
         assert published_pid.status == PIDStatus.REGISTERED
         rec = TestPublishedRecord.get_record(published_pid.object_uuid)
-        assert rec['title'] == '2'
+        assert rec['title'] == '22'
         # revision 0 original, 1 deleted, 2 temporarily reverted to orig, 3 published
         assert rec.revision_id == 3
 
@@ -227,7 +227,7 @@ def test_publish_redirected_published(app, db, schemas):
         published_uuid = uuid.uuid4()
         published_record = TestPublishedRecord.create({
             'id': '1',
-            'title': '1'
+            'title': '11'
         }, id_=published_uuid)
         published_pid = PersistentIdentifier.create(
             pid_type='recid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -238,7 +238,7 @@ def test_publish_redirected_published(app, db, schemas):
         draft_uuid = uuid.uuid4()
         rec = TestDraftRecord.create({
             'id': '1',
-            'title': '2'
+            'title': '22'
         }, id_=draft_uuid)
         draft_pid = PersistentIdentifier.create(
             pid_type='drecid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -256,7 +256,7 @@ def test_publish_redirected_published(app, db, schemas):
         with pytest.raises(NotImplementedError):
             rec.publish(draft_pid,
                         TestPublishedRecord, 'recid',
-                        lambda record: True,
+                        lambda record, pid: True,
                         remove_draft=True)
 
 
@@ -267,7 +267,7 @@ def test_unpublish_record(app, db, schemas):
         published_uuid = uuid.uuid4()
         published_record = TestPublishedRecord.create({
             'id': '1',
-            'title': '1'
+            'title': '11'
         }, id_=published_uuid)
         published_pid = PersistentIdentifier.create(
             pid_type='recid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -288,7 +288,7 @@ def test_unpublish_record(app, db, schemas):
         assert draft_pid.status == PIDStatus.REGISTERED
         rec = TestDraftRecord.get_record(draft_pid.object_uuid)
         assert rec.model.json is not None
-        assert rec['title'] == '1'
+        assert rec['title'] == '11'
         assert rec.revision_id == 0
 
 
@@ -299,7 +299,7 @@ def test_unpublish_record_existing_draft(app, db, schemas):
         published_uuid = uuid.uuid4()
         published_record = TestPublishedRecord.create({
             'id': '1',
-            'title': '1'
+            'title': '11'
         }, id_=published_uuid)
         published_pid = PersistentIdentifier.create(
             pid_type='recid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -310,7 +310,7 @@ def test_unpublish_record_existing_draft(app, db, schemas):
         draft_uuid = uuid.uuid4()
         draft_record = TestDraftRecord.create({
             'id': '1',
-            'title': '2'
+            'title': '22'
         }, id_=draft_uuid)
         draft_pid = PersistentIdentifier.create(
             pid_type='drecid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -331,7 +331,7 @@ def test_unpublish_record_existing_draft(app, db, schemas):
         assert draft_pid.status == PIDStatus.REGISTERED
         rec = TestDraftRecord.get_record(draft_pid.object_uuid)
         assert rec.model.json is not None
-        assert rec['title'] == '2'  # should not be changed on a newer record
+        assert rec['title'] == '22'  # should not be changed on a newer record
         assert rec.revision_id == 0
 
 
@@ -342,7 +342,7 @@ def test_unpublish_record_redirected_draft(app, db, schemas):
         published_uuid = uuid.uuid4()
         published_record = TestPublishedRecord.create({
             'id': '1',
-            'title': '1'
+            'title': '11'
         }, id_=published_uuid)
         published_pid = PersistentIdentifier.create(
             pid_type='recid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -353,7 +353,7 @@ def test_unpublish_record_redirected_draft(app, db, schemas):
         draft_uuid = uuid.uuid4()
         draft_record = TestDraftRecord.create({
             'id': '1',
-            'title': '2'
+            'title': '22'
         }, id_=draft_uuid)
         draft_pid = PersistentIdentifier.create(
             pid_type='drecid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -379,7 +379,7 @@ def test_draft_record(app, db, schemas):
         published_uuid = uuid.uuid4()
         published_record = TestPublishedRecord.create({
             'id': '1',
-            'title': '1'
+            'title': '11'
         }, id_=published_uuid)
         published_pid = PersistentIdentifier.create(
             pid_type='recid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -394,7 +394,7 @@ def test_draft_record(app, db, schemas):
         published_pid = PersistentIdentifier.get(pid_type='recid', pid_value='1')
         assert published_pid.status == PIDStatus.REGISTERED
         rec = TestDraftRecord.get_record(published_uuid, with_deleted=True)
-        assert rec['title'] == '1'
+        assert rec['title'] == '11'
         assert rec.revision_id == 0
 
         # draft version should appear
@@ -402,7 +402,7 @@ def test_draft_record(app, db, schemas):
         assert draft_pid.status == PIDStatus.REGISTERED
         rec = TestDraftRecord.get_record(draft_pid.object_uuid)
         assert rec.model.json is not None
-        assert rec['title'] == '1'
+        assert rec['title'] == '11'
         assert rec.revision_id == 0
 
 
@@ -413,7 +413,7 @@ def test_draft_record_existing_draft(app, db, schemas):
         published_uuid = uuid.uuid4()
         published_record = TestPublishedRecord.create({
             'id': '1',
-            'title': '1'
+            'title': '11'
         }, id_=published_uuid)
         published_pid = PersistentIdentifier.create(
             pid_type='recid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -424,7 +424,7 @@ def test_draft_record_existing_draft(app, db, schemas):
         draft_uuid = uuid.uuid4()
         draft_record = TestDraftRecord.create({
             'id': '1',
-            'title': '2'
+            'title': '22'
         }, id_=draft_uuid)
         draft_pid = PersistentIdentifier.create(
             pid_type='drecid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -439,7 +439,7 @@ def test_draft_record_existing_draft(app, db, schemas):
         published_pid = PersistentIdentifier.get(pid_type='recid', pid_value='1')
         assert published_pid.status == PIDStatus.REGISTERED
         rec = TestDraftRecord.get_record(published_uuid, with_deleted=True)
-        assert rec['title'] == '1'
+        assert rec['title'] == '11'
         assert rec.revision_id == 0
 
         # draft version should be there unchanged
@@ -447,7 +447,7 @@ def test_draft_record_existing_draft(app, db, schemas):
         assert draft_pid.status == PIDStatus.REGISTERED
         rec = TestDraftRecord.get_record(draft_pid.object_uuid)
         assert rec.model.json is not None
-        assert rec['title'] == '2'  # should not be changed on a newer record
+        assert rec['title'] == '22'  # should not be changed on a newer record
         assert rec.revision_id == 0
 
 
@@ -458,7 +458,7 @@ def test_draft_record_deleted_draft(app, db, schemas):
         published_uuid = uuid.uuid4()
         published_record = TestPublishedRecord.create({
             'id': '1',
-            'title': '1'
+            'title': '11'
         }, id_=published_uuid)
         published_pid = PersistentIdentifier.create(
             pid_type='recid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -469,7 +469,7 @@ def test_draft_record_deleted_draft(app, db, schemas):
         draft_uuid = uuid.uuid4()
         draft_record = TestDraftRecord.create({
             'id': '1',
-            'title': '2'
+            'title': '22'
         }, id_=draft_uuid)
         draft_pid = PersistentIdentifier.create(
             pid_type='drecid', pid_value='1', status=PIDStatus.REGISTERED,
@@ -490,7 +490,7 @@ def test_draft_record_deleted_draft(app, db, schemas):
         published_pid = PersistentIdentifier.get(pid_type='recid', pid_value='1')
         assert published_pid.status == PIDStatus.REGISTERED
         rec = TestDraftRecord.get_record(published_uuid, with_deleted=True)
-        assert rec['title'] == '1'
+        assert rec['title'] == '11'
         assert rec.revision_id == 0
 
         # draft version should be there unchanged
@@ -498,5 +498,5 @@ def test_draft_record_deleted_draft(app, db, schemas):
         assert draft_pid.status == PIDStatus.REGISTERED
         rec = TestDraftRecord.get_record(draft_pid.object_uuid)
         assert rec.model.json is not None
-        assert rec['title'] == '1'
+        assert rec['title'] == '11'
         assert rec.revision_id == 3

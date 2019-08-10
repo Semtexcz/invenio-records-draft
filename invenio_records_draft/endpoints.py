@@ -15,6 +15,7 @@ from invenio_records_rest.serializers import (
 )
 from invenio_records_rest.utils import allow_all, deny_all, obj_or_import_string
 
+from invenio_records_draft.es_validation import register_elasticsearch_signals
 from invenio_records_draft.marshmallow import DraftSchemaWrapper
 from invenio_records_draft.record import DraftEnabledRecordMixin
 from invenio_records_draft.views import (
@@ -37,6 +38,7 @@ def draft_enabled_endpoint(
         unpublish_permission_factory=allow_all,
         edit_permission_factory=allow_all,
         published_record_validator=None,
+        published_jsonschema=None,
         **kwargs
 ):
     published_endpoint = f'published_{url_prefix}'
@@ -219,7 +221,7 @@ def draft_enabled_endpoint(
         published_record_validator = \
             DraftEnabledRecordMixin.marshmallow_validator(metadata_marshmallow)
 
-    _registrar.register_blueprint_views(
+    if _registrar.register_blueprint_views(
         endpoint_name=published_endpoint,
         draft_endpoint_name=draft_endpoint,
         draft_url=draft_kwargs['item_route'],
@@ -232,7 +234,12 @@ def draft_enabled_endpoint(
         unpublish_permission_factory=unpublish_permission_factory,
         edit_permission_factory=edit_permission_factory,
         published_record_validator=published_record_validator
-    )
+    ):
+        register_elasticsearch_signals(
+            draft_kwargs['search_index'], published_record_validator,
+            published_jsonschema, obj_or_import_string(published_kwargs['record_class']),
+            draft_pid_type=draft_pid_type)
+
 
     return {
         published_endpoint: published_kwargs,
@@ -374,7 +381,7 @@ class BlueprintRegistrar:
             published_record_validator
     ):
         if endpoint_name in self.endpoints:
-            return
+            return False
 
         views = [
             dict(rule=f'{draft_url}/publish', view_func=PublishRecordAction.as_view(
@@ -402,6 +409,6 @@ class BlueprintRegistrar:
         ]
 
         self.endpoints[endpoint_name] = views
-
+        return True
 
 _registrar = BlueprintRegistrar()

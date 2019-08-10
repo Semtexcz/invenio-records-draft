@@ -57,7 +57,7 @@ class DraftEnabledRecordMixin:
 
         # clone metadata
         metadata = dict(draft_record)
-        published_record_validator(metadata)
+        published_record_validator(metadata, draft_pid)
 
         # note: the passed record must fill in the schema otherwise the published record will be
         # without any schema and will not get indexed
@@ -207,8 +207,10 @@ class DraftEnabledRecordMixin:
 
     @staticmethod
     def marshmallow_validator(marshmallow_schema_class):
-        def validate(record):
-            context = {}
+        def validate(record, pid):
+            context = {
+                'pid': pid
+            }
 
             result = marshmallow_schema_class(context=context).load(dict(record))
 

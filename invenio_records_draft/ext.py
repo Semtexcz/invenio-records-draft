@@ -2,6 +2,7 @@ import json
 import os
 import pkgutil
 
+import pkg_resources
 from elasticsearch import VERSION as ES_VERSION
 from invenio_base.signals import app_loaded
 from invenio_jsonschemas import current_jsonschemas
@@ -22,7 +23,30 @@ class InvenioRecordsDraftState(object):
         config = self.preprocess_config(config)
         schema_data = current_jsonschemas.get_schema(
             config['published_schema'], with_refs=False, resolved=True)
-        self.remove_required(schema_data)
+
+        removed_properties = config.get('removed_properties', {
+            'type': ['required'],
+            'string': ['minLength', 'maxLength', 'pattern', 'format'],
+            'integer': [
+                'multipleOf',
+                'minimum', 'exclusiveMinimum', 'maximum', 'exclusiveMaximum'
+            ],
+            'number': [
+                'multipleOf',
+                'minimum', 'exclusiveMinimum', 'maximum', 'exclusiveMaximum'
+            ],
+            'object': [
+                'required', 'minProperties', 'maxProperties', 'dependencies'
+            ],
+            'array': [
+                'minItems', 'maxItems', 'uniqueItems'
+            ]
+        })
+
+        self.remove_properties(schema_data, removed_properties)
+
+        if 'draft_schema_transformer' in config:
+            schema_data = config['draft_schema_transformer'](schema_data)
         target_schema = config['draft_schema_file']
         target_dir = os.path.dirname(target_schema)
 
@@ -62,15 +86,19 @@ class InvenioRecordsDraftState(object):
 
         return target_mapping
 
-    def remove_required(self, el):
+    def remove_properties(self, el, props):
         if isinstance(el, list):
             for c in el:
-                self.remove_required(c)
-        elif isinstance(el, dict):
-            if 'required' in el:
-                del el['required']
-            for c in el.values():
-                self.remove_required(c)
+                self.remove_properties(c, props)
+
+        if isinstance(el, dict):
+            _type = el.get('type', None)
+            removed_props = props.get(_type, [])
+            for k, c in list(el.items()):
+                if k in removed_props:
+                    del el[k]
+                else:
+                    self.remove_properties(c, props)
 
     @staticmethod
     def draft_schema(published_schema):
@@ -115,7 +143,8 @@ class InvenioRecordsDraft(object):
     # noinspection PyUnusedLocal
     def init_app(self, app, db=None):
         self.init_config(app)
-        app.extensions['invenio-records-draft'] = InvenioRecordsDraftState(app)
+        _state = InvenioRecordsDraftState(app)
+        app.extensions['invenio-records-draft'] = _state
         _registrar.add_to_blueprint(blueprint)
 
     # noinspection PyMethodMayBeStatic
