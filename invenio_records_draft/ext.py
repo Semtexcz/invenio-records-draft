@@ -2,12 +2,13 @@ import json
 import os
 import pkgutil
 
-import pkg_resources
 from elasticsearch import VERSION as ES_VERSION
 from invenio_base.signals import app_loaded
 from invenio_jsonschemas import current_jsonschemas
 from invenio_search import current_search
 from invenio_search.utils import schema_to_index
+
+import pkg_resources
 
 from .endpoints import _registrar
 from .proxies import current_drafts

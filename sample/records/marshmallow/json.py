@@ -17,8 +17,10 @@ from invenio_records_rest.schemas.fields import (
 )
 from marshmallow import fields, missing, validate
 
-from invenio_records_draft.marshmallow import DraftEnabledSchema
-from invenio_records_draft.marshmallow import DraftValidationSchemaV1Mixin
+from invenio_records_draft.marshmallow import (
+    DraftEnabledSchema,
+    DraftValidationSchemaV1Mixin,
+)
 
 
 class MetadataSchemaV1(DraftValidationSchemaV1Mixin, DraftEnabledSchema, StrictKeysMixin):

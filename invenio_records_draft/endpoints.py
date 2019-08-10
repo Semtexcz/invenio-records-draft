@@ -222,24 +222,23 @@ def draft_enabled_endpoint(
             DraftEnabledRecordMixin.marshmallow_validator(metadata_marshmallow)
 
     if _registrar.register_blueprint_views(
-        endpoint_name=published_endpoint,
-        draft_endpoint_name=draft_endpoint,
-        draft_url=draft_kwargs['item_route'],
-        published_pid_type=pid_type,
-        published_record_class=obj_or_import_string(published_kwargs['record_class']),
-        draft_pid_type=draft_pid_type,
-        draft_record_class=obj_or_import_string(draft_kwargs['record_class']),
-        published_url=published_kwargs['item_route'],
-        publish_permission_factory=publish_permission_factory,
-        unpublish_permission_factory=unpublish_permission_factory,
-        edit_permission_factory=edit_permission_factory,
-        published_record_validator=published_record_validator
+            endpoint_name=published_endpoint,
+            draft_endpoint_name=draft_endpoint,
+            draft_url=draft_kwargs['item_route'],
+            published_pid_type=pid_type,
+            published_record_class=obj_or_import_string(published_kwargs['record_class']),
+            draft_pid_type=draft_pid_type,
+            draft_record_class=obj_or_import_string(draft_kwargs['record_class']),
+            published_url=published_kwargs['item_route'],
+            publish_permission_factory=publish_permission_factory,
+            unpublish_permission_factory=unpublish_permission_factory,
+            edit_permission_factory=edit_permission_factory,
+            published_record_validator=published_record_validator
     ):
         register_elasticsearch_signals(
             draft_kwargs['search_index'], published_record_validator,
             published_jsonschema, obj_or_import_string(published_kwargs['record_class']),
             draft_pid_type=draft_pid_type)
-
 
     return {
         published_endpoint: published_kwargs,
@@ -410,5 +409,6 @@ class BlueprintRegistrar:
 
         self.endpoints[endpoint_name] = views
         return True
+
 
 _registrar = BlueprintRegistrar()
