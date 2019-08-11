@@ -13,10 +13,10 @@ from flask_login import current_user
 from invenio_jsonschemas import current_jsonschemas
 from invenio_records import Record
 from invenio_records_rest.facets import terms_filter
-
-from sample.records.marshmallow import MetadataSchemaV1, RecordSchemaV1
+from werkzeug.utils import cached_property
 
 from invenio_records_draft.record import DraftEnabledRecordMixin
+from sample.records.marshmallow import MetadataSchemaV1, RecordSchemaV1
 
 
 def _(x):
@@ -39,10 +39,13 @@ class PublishedRecord(DraftEnabledRecordMixin, Record):
 
 
 class DraftRecord(DraftEnabledRecordMixin, Record):
-    published_record_validator = DraftEnabledRecordMixin.marshmallow_validator(
-        'sample.records.marshmallow:MetadataSchemaV1',
-        'records/record-v1.0.0.json'
-    )
+
+    @cached_property
+    def draft_validator(self):
+        return DraftEnabledRecordMixin.marshmallow_validator(
+            'sample.records.marshmallow:MetadataSchemaV1',
+            'records/record-v1.0.0.json'
+        )
 
     def validate(self, **kwargs):
         self['$schema'] = current_jsonschemas.path_to_url('draft/records/record-v1.0.0.json')

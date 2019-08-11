@@ -8,9 +8,9 @@ from invenio_pidstore.minters import recid_minter
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records import Record
 from invenio_search import current_search_client
-from sample.records.marshmallow import MetadataSchemaV1, RecordSchemaV1
 
 from invenio_records_draft.proxies import current_drafts
+from sample.records.marshmallow import MetadataSchemaV1, RecordSchemaV1
 from tests.helpers import header_links, login
 
 
@@ -181,7 +181,6 @@ def test_draft_endpoint_list(app, db, schemas, mappings, prepare_es,
 
 def test_draft_endpoint_ops(app, db, schemas, mappings, prepare_es,
                             client, draft_records_url):
-
     resp = client.post(
         draft_records_url,
         json={
@@ -202,7 +201,17 @@ def test_draft_endpoint_ops(app, db, schemas, mappings, prepare_es,
     assert resp.status_code == 200
     assert resp.json['metadata'] == {
         "$schema": "https://localhost:5000/schemas/draft/records/record-v1.0.0.json",
-        "id": "1"
+        "id": "1",
+        'invenio_draft_validation': {
+            'errors': {
+                'marshmallow': [
+                    {'field': 'title',
+                     'message': 'Missing data for required field.'
+                     }
+                ]
+            },
+            'valid': False
+        }
     }
 
     # try to update the record

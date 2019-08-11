@@ -8,14 +8,21 @@ from flask import Blueprint, url_for
 from invenio_base.signals import app_loaded
 from invenio_jsonschemas import current_jsonschemas
 from invenio_records_rest import current_records_rest
-from invenio_records_rest.utils import build_default_endpoint_prefixes, obj_or_import_string
+from invenio_records_rest.utils import build_default_endpoint_prefixes
 from invenio_records_rest.views import create_url_rules
 from invenio_search import current_search
 from invenio_search.utils import schema_to_index
 
-from invenio_records_draft.endpoints import create_published_endpoint, create_draft_endpoint, pid_getter
-from invenio_records_draft.record import DraftEnabledRecordMixin
-from invenio_records_draft.views import PublishRecordAction, UnpublishRecordAction, EditRecordAction
+from invenio_records_draft.endpoints import (
+    create_draft_endpoint,
+    create_published_endpoint,
+    pid_getter,
+)
+from invenio_records_draft.views import (
+    EditRecordAction,
+    PublishRecordAction,
+    UnpublishRecordAction,
+)
 
 
 class InvenioRecordsDraftState(object):
@@ -225,8 +232,10 @@ class InvenioRecordsDraftState(object):
             if not isinstance(json_schemas, (list, tuple)):
                 json_schemas = [json_schemas]
 
-            published_index = config.pop('published_search_index', None) or \
-                              config.pop('search_index', None)
+            published_index = (
+                    config.pop('published_search_index', None) or
+                    config.pop('search_index', None)
+            )
 
             if not published_index:
                 published_index = get_search_index(json_schemas, url_prefix)
@@ -260,8 +269,10 @@ class InvenioRecordsDraftState(object):
                 edit_permission_factory=edit_permission_factory,
                 **config)
 
-            draft_index = config.pop('draft_search_index', None) or \
-                          config.pop('search_index', None)
+            draft_index = (
+                    config.pop('draft_search_index', None) or
+                    config.pop('search_index', None)
+            )
 
             if not draft_index:
                 draft_schemas = [self.get_draft_schema(x) for x in json_schemas]
