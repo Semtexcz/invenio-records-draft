@@ -416,7 +416,7 @@ REST Endpoints
 .. code:: python
 
     RECORDS_REST_ENDPOINTS = {
-        'published': {
+        'published_records': {
             'create_permission_factory_imp': '<function deny_all>',
             'default_endpoint_prefix': True,
             'delete_permission_factory_imp': '<function allow_all>',
@@ -442,7 +442,7 @@ REST Endpoints
             'update_permission_factory_imp': '<function deny_all>',
             'endpoint': 'published_records'
         },
-        'draft': {
+        'draft_records': {
             'create_permission_factory_imp': '<function allow_all>',
             'default_endpoint_prefix': True,
             'delete_permission_factory_imp': '<function allow_all>',
