@@ -33,7 +33,8 @@ Example:
     created_draft_url = post(draft_url,
         json={
             '$schema': current_jsonschemas.path_to_url('draft/records/record-v1.0.0.json')
-        })[...]
+        })
+    # 302, headers['Location'] == 'https://localhost:5000/records/1'
 
     resp = get(created_draft_url)
 
