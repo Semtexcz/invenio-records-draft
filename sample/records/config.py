@@ -14,7 +14,6 @@ from invenio_jsonschemas import current_jsonschemas
 from invenio_records import Record
 from invenio_records_rest.facets import terms_filter
 
-from invenio_records_draft.endpoints import draft_enabled_endpoint
 from sample.records.marshmallow import MetadataSchemaV1, RecordSchemaV1
 
 
@@ -43,20 +42,25 @@ class PublishedRecord(Record):
         return super().validate(**kwargs)
 
 
-RECORDS_REST_ENDPOINTS = draft_enabled_endpoint(
-    url_prefix='records',
-    record_marshmallow=RecordSchemaV1,
-    metadata_marshmallow=MetadataSchemaV1,
-    search_index='records-record-v1.0.0',
-    draft_pid_type='drecid',
-    draft_allow_patch=True,
-    publish_permission_factory=allow_authenticated,
-    unpublish_permission_factory=allow_authenticated,
-    edit_permission_factory=allow_authenticated,
-    draft_record_class=DraftRecord,
-    published_record_class=PublishedRecord,
-    published_jsonschema='records/record-v1.0.0.json'
-)
+DRAFT_ENABLED_RECORDS_REST_ENDPOINTS = {
+    'records': {
+        'json_schemas': [
+            'records/record-v1.0.0.json'
+        ],
+        'draft_pid_type': 'drecid',
+        'draft_allow_patch': True,
+
+        'record_marshmallow': RecordSchemaV1,
+        'metadata_marshmallow': MetadataSchemaV1,
+
+        'draft_record_class': DraftRecord,
+        'published_record_class': PublishedRecord,
+
+        'publish_permission_factory': allow_authenticated,
+        'unpublish_permission_factory': allow_authenticated,
+        'edit_permission_factory': allow_authenticated,
+    }
+}
 
 """REST API for my-site."""
 

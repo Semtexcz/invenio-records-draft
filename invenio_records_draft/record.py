@@ -219,3 +219,13 @@ class DraftEnabledRecordMixin:
             return result.data
 
         return validate
+
+    def validate(self, *args, **kwargs):
+        # data = dict(self)
+        # if hasattr(self, 'validator'):
+        #     pid = PersistentIdentifier.get_by_object(
+        #         object_type='rec', object_uuid=self.model.id)
+        #     data = self.validator(data, pid)
+        # if hasattr(self, 'published_record_class'):
+        #     pass
+        return super().validate(*args, **kwargs)
