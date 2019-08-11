@@ -27,20 +27,22 @@ Example:
 
     # marshmallow and schema: property 'title' is required
 
-    draft_url = 'https://localhost:5000/api/drafts/records/'
-    published_url = 'https://localhost:5000/api/records/'
+    > draft_url = 'https://localhost:5000/api/drafts/records/'
+    > published_url = 'https://localhost:5000/api/records/'
 
-    created_draft_url = post(draft_url,
+    > created_draft_url = post(draft_url,
         json={
             '$schema': current_jsonschemas.path_to_url('draft/records/record-v1.0.0.json')
-        })
-    # 302, created_draft_url = headers['Location']
+        })[...]
+    # 302, created_draft_url = 'https://localhost:5000/drafts/records/1'
 
-    resp = get(created_draft_url)
+    'https://localhost:5000/drafts/records/1'
 
-    publish_link = resp.json['links']['publish']
+    > resp = get(created_draft_url)
 
-    resp.json['metadata']
+    > publish_link = resp.json['links']['publish']
+
+    > resp.json['metadata']
 
     {
         "$schema": "https://localhost:5000/schemas/draft/records/record-v1.0.0.json",
@@ -57,7 +59,7 @@ Example:
         }
     }
 
-    put(created_draft_url, json={
+    > put(created_draft_url, json={
         "$schema": "https://localhost:5000/schemas/draft/records/record-v1.0.0.json",
         'title': 'def'})
 
@@ -69,8 +71,9 @@ Example:
         }
     }
 
-    resp = post(publish_link)
-    # 302, headers['Location'] == 'http://localhost:5000/records/1'
+    > resp = post(publish_link)
+
+    302, headers['Location'] == 'https://localhost:5000/records/1'
 
 
 Library principles:
