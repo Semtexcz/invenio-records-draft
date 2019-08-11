@@ -232,6 +232,28 @@ To allow for schema validation on draft endpoint, create your own record classes
             self['$schema'] = current_jsonschemas.path_to_url('draft/records/record-v1.0.0.json')
             return super().validate(**kwargs)
 
+When a draft record is validated, the ``draft_validator`` gets called and fills in property
+``invenio_draft_validation`` that is stored both to invenio database and to elasticsearch:
+
+.. code:: javascript
+
+    {
+        'id': 1,
+        '$schema': '...',
+        // ... other properties
+        'invenio_draft_validation': {
+            'valid': false,
+            'errors': {
+                'marshmallow': [
+                    {
+                        'field': 'title',
+                        'message': 'Missing data for required field.'
+                    }
+                ]
+            }
+        }
+    }
+
 Endpoints, loaders and serializers
 -----------------------------------
 
