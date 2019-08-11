@@ -70,7 +70,7 @@ Example:
         }
     }
 
-    > resp = post(publish_link)
+    > post(publish_link)
 
     302, headers['Location'] == 'https://localhost:5000/records/1'
 
