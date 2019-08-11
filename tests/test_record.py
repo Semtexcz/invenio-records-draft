@@ -4,11 +4,12 @@ import pytest
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records import Record
-from invenio_records_rest.loaders.marshmallow import MarshmallowErrors
-from jsonschema import ValidationError
-from werkzeug.utils import cached_property
 
-from invenio_records_draft.record import DraftEnabledRecordMixin, InvalidRecordException
+from invenio_records_draft.record import (
+    DraftEnabledRecordMixin,
+    InvalidRecordException,
+    MarshmallowValidator,
+)
 
 
 class TestDraftRecord(DraftEnabledRecordMixin, Record):
@@ -18,12 +19,10 @@ class TestDraftRecord(DraftEnabledRecordMixin, Record):
         self['$schema'] = self.schema
         return super().validate(**kwargs)
 
-    @cached_property
-    def draft_validator(self):
-        return DraftEnabledRecordMixin.marshmallow_validator(
-            'sample.records.marshmallow:MetadataSchemaV1',
-            'records/record-v1.0.0.json'
-        )
+    draft_validator = MarshmallowValidator(
+        'sample.records.marshmallow:MetadataSchemaV1',
+        'records/record-v1.0.0.json'
+    )
 
 
 class TestPublishedRecord(DraftEnabledRecordMixin, Record):

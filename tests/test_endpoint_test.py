@@ -2,7 +2,6 @@ import re
 import uuid
 
 from invenio_indexer.api import RecordIndexer
-from invenio_indexer.signals import before_record_index
 from invenio_jsonschemas import current_jsonschemas
 from invenio_pidstore.minters import recid_minter
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -10,7 +9,6 @@ from invenio_records import Record
 from invenio_search import current_search_client
 
 from invenio_records_draft.proxies import current_drafts
-from sample.records.marshmallow import MetadataSchemaV1, RecordSchemaV1
 from tests.helpers import header_links, login
 
 
