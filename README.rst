@@ -224,8 +224,8 @@ To allow for schema validation on draft endpoint, create your own record classes
     class DraftRecord(DraftEnabledRecordMixin, Record):
 
         draft_validator = MarshmallowValidator(
-            'sample.records.marshmallow:MetadataSchemaV1',
-            'records/record-v1.0.0.json'
+            'sample.records.marshmallow:MetadataSchemaV1',  # marshmallow of the published version
+            'records/record-v1.0.0.json'                    # json schema of the published version
         )
 
         def validate(self, **kwargs):
