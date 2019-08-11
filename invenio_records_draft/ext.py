@@ -52,6 +52,11 @@ class InvenioRecordsDraftState(object):
         })
 
         self.remove_properties(schema_data, removed_properties)
+        schema_data['properties']['invenio_draft_validation'] = {
+            'type': 'object',
+            'additionalProperties': True,
+            'properties': {}
+        }
 
         if 'draft_schema_transformer' in config:
             schema_data = config['draft_schema_transformer'](schema_data)
@@ -323,11 +328,6 @@ class InvenioRecordsDraftState(object):
 
             metadata_marshmallow = \
                 endpoint_configs[prefix].get('metadata_marshmallow', None)
-
-            if not published_record_validator and metadata_marshmallow:
-                published_record_validator = \
-                    DraftEnabledRecordMixin.marshmallow_validator(
-                        obj_or_import_string(metadata_marshmallow))
 
             blueprint.add_url_rule(
                 rule=f'{draft_url}{pid_getter(draft_config)}/publish',

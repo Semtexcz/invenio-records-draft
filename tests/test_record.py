@@ -6,9 +6,9 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records import Record
 from invenio_records_rest.loaders.marshmallow import MarshmallowErrors
 from jsonschema import ValidationError
+from werkzeug.utils import cached_property
 
-from invenio_records_draft.record import DraftEnabledRecordMixin
-from records.marshmallow import MetadataSchemaV1
+from invenio_records_draft.record import DraftEnabledRecordMixin, InvalidRecordException
 
 
 class TestDraftRecord(DraftEnabledRecordMixin, Record):
@@ -17,6 +17,13 @@ class TestDraftRecord(DraftEnabledRecordMixin, Record):
     def validate(self, **kwargs):
         self['$schema'] = self.schema
         return super().validate(**kwargs)
+
+    @cached_property
+    def draft_validator(self):
+        return DraftEnabledRecordMixin.marshmallow_validator(
+            'sample.records.marshmallow:MetadataSchemaV1',
+            'records/record-v1.0.0.json'
+        )
 
 
 class TestPublishedRecord(DraftEnabledRecordMixin, Record):
@@ -41,7 +48,7 @@ def test_publish_record(app, db, schemas):
             object_type='rec', object_uuid=draft_uuid
         )
 
-        with pytest.raises(ValidationError):
+        with pytest.raises(InvalidRecordException):
             # title is required but not in rec, so should fail
             rec.publish(draft_pid,
                         TestPublishedRecord, 'recid',
@@ -86,11 +93,10 @@ def test_publish_record_marshmallow(app, db, schemas):
             object_type='rec', object_uuid=draft_uuid
         )
 
-        with pytest.raises(MarshmallowErrors):
+        with pytest.raises(InvalidRecordException):
             # title is required but not in rec, so should fail
             rec.publish(draft_pid,
                         TestPublishedRecord, 'recid',
-                        # DraftEnabledRecordMixin.marshmallow_validator(MetadataSchemaV1),
                         remove_draft=True)
 
         with pytest.raises(PIDDoesNotExistError):
@@ -101,10 +107,11 @@ def test_publish_record_marshmallow(app, db, schemas):
         rec['title'] = 'blah'
         rec.commit()
 
+        assert rec['invenio_draft_validation']['valid']
+
         # and publish it again
         rec.publish(draft_pid,
                     TestPublishedRecord, 'recid',
-                    # DraftEnabledRecordMixin.marshmallow_validator(MetadataSchemaV1),
                     remove_draft=True)
 
         # draft should be gone
@@ -124,26 +131,28 @@ def test_publish_record_with_previous_version(app, db, schemas):
     TestPublishedRecord.schema = schemas['published']
     with db.session.begin_nested():
         published_uuid = uuid.uuid4()
-        published_record = TestPublishedRecord.create({
-            'id': '1',
-            'title': '11'
-        }, id_=published_uuid)
         PersistentIdentifier.create(
             pid_type='recid', pid_value='1', status=PIDStatus.REGISTERED,
             object_type='rec', object_uuid=published_uuid
         )
+        published_record = TestPublishedRecord.create({
+            'id': '1',
+            'title': '11'
+        }, id_=published_uuid)
         assert published_record.revision_id == 0
 
         draft_uuid = uuid.uuid4()
-        draft_record = TestDraftRecord.create({
-            'id': '1',
-            'title': '22'
-        }, id_=draft_uuid)
         draft_pid = PersistentIdentifier.create(
             pid_type='drecid', pid_value='1', status=PIDStatus.REGISTERED,
             object_type='rec', object_uuid=draft_uuid
         )
+        draft_record = TestDraftRecord.create({
+            'id': '1',
+            'title': '22'
+        }, id_=draft_uuid)
         assert draft_record.revision_id == 0
+
+        print(draft_record['invenio_draft_validation'])
 
         # and publish it again
         draft_record.publish(draft_pid,

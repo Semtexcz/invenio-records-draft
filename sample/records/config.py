@@ -16,6 +16,8 @@ from invenio_records_rest.facets import terms_filter
 
 from sample.records.marshmallow import MetadataSchemaV1, RecordSchemaV1
 
+from invenio_records_draft.record import DraftEnabledRecordMixin
+
 
 def _(x):
     """Identity function for string extraction."""
@@ -30,15 +32,20 @@ def allow_authenticated(*args, **kwargs):
     return type('Allow', (), {'can': lambda self: current_user.is_authenticated})()
 
 
-class DraftRecord(Record):
+class PublishedRecord(DraftEnabledRecordMixin, Record):
     def validate(self, **kwargs):
-        self['$schema'] = current_jsonschemas.path_to_url('draft/records/record-v1.0.0.json')
+        self['$schema'] = current_jsonschemas.path_to_url('records/record-v1.0.0.json')
         return super().validate(**kwargs)
 
 
-class PublishedRecord(Record):
+class DraftRecord(DraftEnabledRecordMixin, Record):
+    published_record_validator = DraftEnabledRecordMixin.marshmallow_validator(
+        'sample.records.marshmallow:MetadataSchemaV1',
+        'records/record-v1.0.0.json'
+    )
+
     def validate(self, **kwargs):
-        self['$schema'] = current_jsonschemas.path_to_url('records/record-v1.0.0.json')
+        self['$schema'] = current_jsonschemas.path_to_url('draft/records/record-v1.0.0.json')
         return super().validate(**kwargs)
 
 

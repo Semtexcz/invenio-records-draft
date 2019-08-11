@@ -2,11 +2,25 @@ import logging
 import uuid
 
 from invenio_db import db
+from invenio_jsonschemas import current_jsonschemas
 from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_pidstore.fetchers import FetchedPID
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_records import Record
 from invenio_records_rest.loaders.marshmallow import MarshmallowErrors
+from invenio_records_rest.utils import obj_or_import_string
+from jsonschema import ValidationError
 
 logger = logging.getLogger('invenio-records-draft')
+
+
+class InvalidRecordException(Exception):
+    def __init__(self, message, errors):
+        super().__init__(message)
+        self.errors = errors
+
+    def __str__(self):
+        return '{0}: {1}'.format(super().__str__(), str(self.errors))
 
 
 class DraftEnabledRecordMixin:
@@ -55,7 +69,10 @@ class DraftEnabledRecordMixin:
         # clone metadata
         metadata = dict(draft_record)
         if 'invenio_draft_validation' in metadata:
-            assert metadata['invenio_draft_validation']['valid']
+            if not metadata['invenio_draft_validation']['valid']:
+                raise InvalidRecordException('Can not publish invalid record',
+                                             errors=metadata['invenio_draft_validation']['errors'])
+            del metadata['invenio_draft_validation']
 
         # note: the passed record must fill in the schema otherwise the published record will be
         # without any schema and will not get indexed
@@ -204,26 +221,70 @@ class DraftEnabledRecordMixin:
         return published_record, draft_record
 
     @staticmethod
-    def marshmallow_validator(marshmallow_schema_class):
-        def validate(record, pid):
+    def marshmallow_validator(marshmallow_schema_class,
+                              published_record_schema,
+                              published_record_class=Record):
+
+        marshmallow_schema_class = obj_or_import_string(marshmallow_schema_class)
+        published_record_class = obj_or_import_string(published_record_class)
+
+        def validate(data, pid):
             context = {
                 'pid': pid
             }
 
-            result = marshmallow_schema_class(context=context).load(dict(record))
+            result = marshmallow_schema_class(context=context).load(data)
 
             if result.errors:
                 raise MarshmallowErrors(result.errors)
-            return result.data
+
+            data = result.data
+            data['$schema'] = \
+                current_jsonschemas.path_to_url(published_record_schema) or published_record_schema
+            data = published_record_class(data)
+            data.validate()
 
         return validate
 
     def validate(self, *args, **kwargs):
-        # data = dict(self)
-        # if hasattr(self, 'validator'):
-        #     pid = PersistentIdentifier.get_by_object(
-        #         object_type='rec', object_uuid=self.model.id)
-        #     data = self.validator(data, pid)
-        # if hasattr(self, 'published_record_class'):
-        #     pass
+        if hasattr(self, 'draft_validator'):
+            try:
+                if self.model:
+                    pid = PersistentIdentifier.query.filter_by(
+                        object_type='rec', object_uuid=self.model.id).one_or_none()
+                else:
+                    pid = FetchedPID(pid_value='', provider=None, pid_type=None)
+                data = dict(self)
+                data.pop('invenio_draft_validation', None)
+                self.draft_validator(data, pid)
+            except MarshmallowErrors as e:
+                self['invenio_draft_validation'] = {
+                    'valid': False,
+                    'errors': {
+                        'marshmallow': e.errors
+                    }
+                }
+            except ValidationError as e:
+                self['invenio_draft_validation'] = {
+                    'valid': False,
+                    'errors': {
+                        'jsonschema': [
+                            {
+                                'field': '.'.join(e.path),
+                                'message': e.message
+                            }
+                        ]
+                    }
+                }
+            except Exception as e:
+                self['invenio_draft_validation'] = {
+                    'valid': False,
+                    'errors': {
+                        'other': str(e)
+                    }
+                }
+            else:
+                self['invenio_draft_validation'] = {
+                    'valid': True
+                }
         return super().validate(*args, **kwargs)
