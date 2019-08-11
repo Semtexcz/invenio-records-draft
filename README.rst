@@ -440,7 +440,6 @@ REST Endpoints
             'links_factory_imp':
                 '<invenio_records_draft.endpoints.PublishedLinksFactory object>',
             'update_permission_factory_imp': '<function deny_all>',
-            'endpoint': 'published_records'
         },
         'draft_records': {
             'create_permission_factory_imp': '<function allow_all>',
@@ -470,6 +469,5 @@ REST Endpoints
             'update_permission_factory_imp': '<function allow_all>',
             'links_factory_imp':
                 '<invenio_records_draft.endpoints.DraftLinksFactory object>',
-            'endpoint': 'draft_records'
         }
     }
