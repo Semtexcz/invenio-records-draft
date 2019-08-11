@@ -13,12 +13,11 @@ class DraftEnabledRecordMixin:
 
     def publish(self, draft_pid,
                 published_record_class, published_pid_type,
-                published_record_validator,
                 remove_draft=True):
 
         return self.publish_record(
             self, draft_pid, published_record_class, published_pid_type,
-            published_record_validator, remove_draft)
+            remove_draft)
 
     def draft(self, published_pid, draft_record_class, draft_pid_type):
         return self.draft_record(self, published_pid, draft_record_class, draft_pid_type)
@@ -29,11 +28,10 @@ class DraftEnabledRecordMixin:
     @staticmethod
     def publish_record(draft_record, draft_pid,
                        published_record_class, published_pid_type,
-                       published_record_validator, remove_draft):
+                       remove_draft):
 
         published_record, draft_record = DraftEnabledRecordMixin._publish_draft(
-            draft_record, draft_pid, published_record_class, published_pid_type,
-            published_record_validator)
+            draft_record, draft_pid, published_record_class, published_pid_type)
 
         if remove_draft:
             # delete the record
@@ -52,12 +50,12 @@ class DraftEnabledRecordMixin:
 
     @staticmethod
     def _publish_draft(draft_record, draft_pid,
-                       published_record_class, published_pid_type,
-                       published_record_validator):
+                       published_record_class, published_pid_type):
 
         # clone metadata
         metadata = dict(draft_record)
-        published_record_validator(metadata, draft_pid)
+        if 'invenio_draft_validation' in metadata:
+            assert metadata['invenio_draft_validation']['valid']
 
         # note: the passed record must fill in the schema otherwise the published record will be
         # without any schema and will not get indexed

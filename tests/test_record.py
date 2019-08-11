@@ -45,7 +45,6 @@ def test_publish_record(app, db, schemas):
             # title is required but not in rec, so should fail
             rec.publish(draft_pid,
                         TestPublishedRecord, 'recid',
-                        lambda record, pid: True,
                         remove_draft=True)
 
         with pytest.raises(PIDDoesNotExistError):
@@ -59,7 +58,6 @@ def test_publish_record(app, db, schemas):
         # and publish it again
         rec.publish(draft_pid,
                     TestPublishedRecord, 'recid',
-                    lambda record, pid: True,
                     remove_draft=True)
 
         # draft should be gone
@@ -92,7 +90,7 @@ def test_publish_record_marshmallow(app, db, schemas):
             # title is required but not in rec, so should fail
             rec.publish(draft_pid,
                         TestPublishedRecord, 'recid',
-                        DraftEnabledRecordMixin.marshmallow_validator(MetadataSchemaV1),
+                        # DraftEnabledRecordMixin.marshmallow_validator(MetadataSchemaV1),
                         remove_draft=True)
 
         with pytest.raises(PIDDoesNotExistError):
@@ -106,7 +104,7 @@ def test_publish_record_marshmallow(app, db, schemas):
         # and publish it again
         rec.publish(draft_pid,
                     TestPublishedRecord, 'recid',
-                    DraftEnabledRecordMixin.marshmallow_validator(MetadataSchemaV1),
+                    # DraftEnabledRecordMixin.marshmallow_validator(MetadataSchemaV1),
                     remove_draft=True)
 
         # draft should be gone
@@ -150,7 +148,6 @@ def test_publish_record_with_previous_version(app, db, schemas):
         # and publish it again
         draft_record.publish(draft_pid,
                              TestPublishedRecord, 'recid',
-                             lambda record, pid: True,
                              remove_draft=True)
 
         # draft should be gone
@@ -202,7 +199,6 @@ def test_publish_deleted_published(app, db, schemas):
         draft_pid = PersistentIdentifier.get(pid_type='drecid', pid_value='1')
         rec.publish(draft_pid,
                     TestPublishedRecord, 'recid',
-                    lambda record, pid: True,
                     remove_draft=True)
 
     with db.session.begin_nested():
@@ -256,7 +252,6 @@ def test_publish_redirected_published(app, db, schemas):
         with pytest.raises(NotImplementedError):
             rec.publish(draft_pid,
                         TestPublishedRecord, 'recid',
-                        lambda record, pid: True,
                         remove_draft=True)
 
 

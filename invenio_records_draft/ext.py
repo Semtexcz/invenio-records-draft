@@ -336,9 +336,9 @@ class InvenioRecordsDraftState(object):
                     publish_permission_factory=permissions['publish_permission_factory'],
                     published_record_class=published_config['record_class'],
                     published_pid_type=published_config['pid_type'],
-                    published_record_validator=published_record_validator,
                     published_endpoint_name=published_endpoint_name
                 ))
+
             blueprint.add_url_rule(
                 rule=f'{published_url}{pid_getter(published_config)}/unpublish',
                 view_func=UnpublishRecordAction.as_view(
@@ -348,6 +348,7 @@ class InvenioRecordsDraftState(object):
                     draft_record_class=draft_config['record_class'],
                     draft_endpoint_name=draft_endpoint_name
                 ))
+
             blueprint.add_url_rule(
                 rule=f'{published_url}{pid_getter(published_config)}/edit',
                 view_func=EditRecordAction.as_view(
@@ -357,6 +358,7 @@ class InvenioRecordsDraftState(object):
                     draft_record_class=draft_config['record_class'],
                     draft_endpoint_name=draft_endpoint_name
                 ))
+
         app.register_blueprint(blueprint)
 
 
