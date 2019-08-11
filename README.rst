@@ -34,7 +34,7 @@ Example:
         json={
             '$schema': current_jsonschemas.path_to_url('draft/records/record-v1.0.0.json')
         })
-    # 302, headers['Location'] == 'https://localhost:5000/records/1'
+    # 302, created_draft_url = headers['Location']
 
     resp = get(created_draft_url)
 
