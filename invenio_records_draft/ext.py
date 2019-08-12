@@ -234,6 +234,9 @@ class InvenioRecordsDraftState(object):
                 app.config['INVENIO_RECORD_DRAFT_SCHEMAS_DIR'], draft_schema)
 
     def _register_blueprints(self, app):
+        if 'invenio_records_rest' not in app.blueprints:
+            return
+
         rest_blueprint = app.blueprints['invenio_records_rest']
         mapping_prefix = app.config.get('SEARCH_INDEX_PREFIX', None)
 
