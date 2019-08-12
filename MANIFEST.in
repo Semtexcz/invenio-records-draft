@@ -5,6 +5,7 @@ recursive-include invenio_records_draft *.py
 recursive-include invenio_records_draft *.json
 
 recursive-exclude tests *.py
+recursive-exclude tests *.json
 recursive-exclude sample *
 
 exclude .coveragerc
