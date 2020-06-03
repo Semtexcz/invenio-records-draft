@@ -1,4 +1,5 @@
 from flask import current_app
+from flatten_dict import flatten
 from invenio.version import __version__ as __invenio_version__
 from invenio_search.utils import build_index_name as invenio_build_index_name
 from invenio_search.version import __version__ as invenio_search_version
@@ -32,3 +33,17 @@ def build_index_name(idx):
         return invenio_build_index_name(idx)
     else:
         return prefixed_search_index(idx)
+
+
+def parse_marshmallow_messages(messages):
+    fl_dict = flatten(messages)
+    result = []
+    for k, v in fl_dict.items():
+        keys = [str(key) for key in k]
+        key = "/".join(keys)
+        if isinstance(v, (list, tuple)):
+            for msg in v:
+                result.append({"field": key, "message": msg})
+        else:
+            result.append({'field': key, "message": v})
+    return result

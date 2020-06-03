@@ -10,6 +10,8 @@ from jsonschema import ValidationError
 from marshmallow import __version_info__ as marshmallow_version
 from marshmallow.exceptions import ValidationError as MarshmallowValidationError
 
+from invenio_records_draft.utils import parse_marshmallow_messages
+
 logger = logging.getLogger('invenio-records-draft')
 
 
@@ -86,7 +88,7 @@ class DraftEnabledRecordMixin:
                 self['invenio_draft_validation'] = {
                     'valid': False,
                     'errors': {
-                        'marshmallow': e.messages
+                        'marshmallow': parse_marshmallow_messages(e.messages)
                     }
                 }
             except ValidationError as e:

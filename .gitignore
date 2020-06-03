@@ -72,3 +72,5 @@ dist/
 run\.sh
 
 .pytest-local\.ini
+
+venv/

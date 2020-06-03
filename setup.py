@@ -10,6 +10,7 @@ readme = open('README.rst').read()
 OAREPO_VERSION = os.environ.get('OAREPO_VERSION', '3.1.1')
 
 install_requires = [
+    'flatten-dict>=0.3.0,<1.0.0'
     'wrapt>=1.11.2'
 ]
 
